@@ -34,5 +34,5 @@ spec:
     - protocol: TCP
       port: 8501         # Service port
       targetPort: 8501   # Container port
-      nodePort: 30010    # NodePort (can be auto-assigned if omitted)
+      nodePort: 30001    # NodePort (can be auto-assigned if omitted)
   type: NodePort
