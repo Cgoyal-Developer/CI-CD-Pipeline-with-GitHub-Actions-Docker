@@ -30,9 +30,13 @@ metadata:
 spec:
   selector:
     app: spaceship-app
+  type: NodePort
   ports:
     - protocol: TCP
-      port: 8501         # Service port
+      port: 8501         # Internal service port
       targetPort: 8501   # Container port
-      nodePort: 30001    # NodePort (can be auto-assigned if omitted)
-  type: NodePort
+      nodePort: 30001    # NodePort 1 (for external access)
+    - protocol: TCP
+      port: 8502         # Another internal service port
+      targetPort: 8502   # Another container port
+      nodePort: 30002    # NodePort 2 (for external access)
