@@ -33,11 +33,7 @@ spec:
   type: NodePort
   ports:
     - protocol: TCP
-      port: 8502         # Another internal service port
-      targetPort: 8502   # Another container port
-      nodePort: 30002    # NodePort 2 (for external access)
-    - protocol: TCP
       port: 8501         # Internal service port
       targetPort: 8501   # Container port
-      nodePort: 30001    # NodePort 1 (for external access)
+      nodePort: 30010    # NodePort 1 (for external access)
 
