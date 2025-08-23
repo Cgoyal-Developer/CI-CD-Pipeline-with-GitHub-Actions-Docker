@@ -1,0 +1,81 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+  pull_request:
+    branches:
+      - main  # Trigger on pull requests to the main branch
+
+jobs:
+  # Job 1: Build the Docker image and run tests
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Log in to Docker Hub using GitHub Secrets (if pushing to Docker Hub)
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Build Docker image
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:${{ github.sha }} .
+
+      # Run tests inside Docker container
+      - name: Run tests
+        run: |
+          docker run --rm ${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:${{ github.sha }} \
+          python -m unittest discover -s /app/tests -p "*.py"  # Ensure tests are discovered in /app/tests
+
+  # Job 2: Push the Docker image to Docker Hub
+  push-to-dockerhub:
+    needs: build-and-test  # Only runs if build-and-test is successful
+    runs-on: ubuntu-latest
+    steps:
+      # Log in to Docker Hub using GitHub Secrets
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Push Docker image to Docker Hub
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:${{ github.sha }} ${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:latest
+
+  # Job 3: Deploy the app using Minikube (or VM)
+  deploy:
+    needs: push-to-dockerhub  # Runs after pushing to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      # Set up Minikube (skip if deploying to VM or other methods)
+      - name: Set up Minikube
+        run: |
+          curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube /usr/local/bin/
+
+      # Start Minikube
+      - name: Start Minikube
+        run: |
+          minikube start
+
+      # Deploy the Docker image to Minikube
+      - name: Deploy Docker image to Minikube
+        run: |
+          eval $(minikube docker-env)
+          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:latest
+          kubectl run titanic-project --image=${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:latest
