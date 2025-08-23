@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  titanic-app:
+    build:
+      context: .
+      dockerfile: Dockerfile  # Specify the Dockerfile to use
+    ports:
+      - "8501:8501"  # Expose Streamlit's default port
+    volumes:
+      - .:/app  # Mount the current directory to /app inside the container (for live updates during development)
+    environment:
+      - PYTHONUNBUFFERED=1  # To ensure logs are displayed directly in the terminal (useful for debugging)
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge  # Default network driver for Docker Compose
