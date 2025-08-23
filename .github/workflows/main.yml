@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build-test-and-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -39,20 +39,6 @@ jobs:
         run: |
           docker run --rm -w /app ${{ secrets.DOCKER_HUB_USERNAME }}/titanic-project:${{ github.sha }} \
           python -m unittest discover -s tests -p "*.py"
-
-  push-to-dockerhub:
-    needs: build-and-test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Pull built image from previous job (if needed)
-        run: echo "No need to pull if cached; image should exist."
 
       - name: Tag and Push Docker image to Docker Hub
         run: |
